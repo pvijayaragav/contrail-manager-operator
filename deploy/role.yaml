@@ -2,7 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   creationTimestamp: null
-  name: contrail-manager-test-2
+  name: contrail-manager-test-1
 rules:
 - apiGroups:
   - ""
@@ -41,7 +41,7 @@ rules:
 - apiGroups:
   - apps
   resourceNames:
-  - contrail-manager-test-2
+  - contrail-manager-test-1
   resources:
   - deployments/finalizers
   verbs:

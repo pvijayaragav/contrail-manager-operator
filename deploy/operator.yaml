@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: contrail-manager-test-2
+  name: contrail-manager-test-1
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: contrail-manager-test-2
+      name: contrail-manager-test-1
   template:
     metadata:
       labels:
-        name: contrail-manager-test-2
+        name: contrail-manager-test-1
     spec:
-      serviceAccountName: contrail-manager-test-2
+      serviceAccountName: contrail-manager-test-1
       containers:
-        - name: contrail-manager-test-2
+        - name: contrail-manager-test-1
           # Replace this with the built image name
           image: REPLACE_IMAGE
           command:
-          - contrail-manager-test-2
+          - contrail-manager-test-1
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
@@ -30,4 +30,4 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
-              value: "contrail-manager-test-2"
+              value: "contrail-manager-test-1"

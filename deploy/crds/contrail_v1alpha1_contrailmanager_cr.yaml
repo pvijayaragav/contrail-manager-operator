@@ -2,6 +2,4 @@ apiVersion: contrail.juniper.net/v1alpha1
 kind: ContrailManager
 metadata:
   name: example-contrailmanager
-spec:
-  # Add fields here
-  size: 3
+spec: {}

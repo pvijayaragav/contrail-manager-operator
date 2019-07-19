@@ -3,6 +3,19 @@ kind: CustomResourceDefinition
 metadata:
   name: contrailcassandras.contrail.juniper.net
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.active
+    description: Defines whether cassandra is active
+    name: Active
+    type: string
+  - JSONPath: .status.nodes
+    description: The nodes where cassandra is installed
+    name: Nodes
+    type: string
+  - JSONPath: .status.ports
+    description: The ports used by cassandra
+    name: Ports
+    type: string
   group: contrail.juniper.net
   names:
     kind: ContrailCassandra
@@ -22,8 +35,43 @@ spec:
         metadata:
           type: object
         spec:
+          properties:
+            containers:
+              items:
+                properties:
+                  configMaps:
+                    items:
+                      properties:
+                        envs:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        name:
+                          type: string
+                      type: object
+                    type: array
+                  image:
+                    type: string
+                  name:
+                    type: string
+                type: object
+              type: array
+            replicas:
+              format: int32
+              type: integer
           type: object
         status:
+          properties:
+            active:
+              type: boolean
+            nodes:
+              items:
+                type: string
+              type: array
+            ports:
+              items:
+                type: string
+              type: array
           type: object
   version: v1alpha1
   versions:
