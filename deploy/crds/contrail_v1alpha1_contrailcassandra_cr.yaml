@@ -1,0 +1,7 @@
+apiVersion: contrail.juniper.net/v1alpha1
+kind: ContrailCassandra
+metadata:
+  name: example-contrailcassandra
+spec:
+  # Add fields here
+  size: 3
