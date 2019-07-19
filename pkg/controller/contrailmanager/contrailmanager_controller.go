@@ -125,6 +125,7 @@ func (r *ReconcileContrailManager) Reconcile(request reconcile.Request) (reconci
 			}
 		}
 	}
+
 	instance.Status.Completed = getInstallCompleted()
 	instance.Status.Active = getAllComponentsStatus()
 	instance.Status.Platform = contrailv1alpha1.Platform{Orchestrator: "kubernetes"}

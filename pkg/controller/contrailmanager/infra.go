@@ -1,23 +1,19 @@
 package contrailmanager
 
-import (
-	"github.com/iancoleman/strcase"
-)
+// const group string = "contrail.juniper.net"
+// const version string = "v1aplpha1"
 
-const group string = "contrail.juniper.net"
-const version string = "v1aplpha1"
-
-var contrailServices = [...]string{
-	"cassandra",
-	"zookeeper",
-	"rabbitmq",
-	"contrail-config",
-	"contrail-control",
-	"contrail-analytics",
-	"contrail-vrouter",
-	"contrail-kubemanager",
-	"contrail-webui",
-}
+// var contrailServices = [...]string{
+// 	"cassandra",
+// 	"zookeeper",
+// 	"rabbitmq",
+// 	"contrail-config",
+// 	"contrail-control",
+// 	"contrail-analytics",
+// 	"contrail-vrouter",
+// 	"contrail-kubemanager",
+// 	"contrail-webui",
+// }
 
 // ContrailService is the struct containing all service info
 type ContrailService struct {
@@ -33,15 +29,15 @@ type ContrailService struct {
 // ContrailServicesMap is the map of all services present above
 var ContrailServicesMap map[string]ContrailService
 
-func init() {
-	for _, service := range contrailServices {
-		ContrailServicesMap[service] = ContrailService{
-			name:                     service,
-			customResourceName:       strcase.ToCamel(service),
-			customResourceSpecName:   strcase.ToCamel(service) + "Spec",
-			customResourceStatusName: strcase.ToCamel(service) + "Status",
-			deploymentName:           strcase.ToKebab(service) + "-deployment",
-			configMapPrefix:          strcase.ToKebab(service) + "-cm-",
-		}
-	}
-}
+// func init() {
+// 	for _, service := range contrailServices {
+// 		ContrailServicesMap[service] = ContrailService{
+// 			name:                     service,
+// 			customResourceName:       strcase.ToCamel(service),
+// 			customResourceSpecName:   strcase.ToCamel(service) + "Spec",
+// 			customResourceStatusName: strcase.ToCamel(service) + "Status",
+// 			deploymentName:           strcase.ToKebab(service) + "-deployment",
+// 			configMapPrefix:          strcase.ToKebab(service) + "-cm-",
+// 		}
+// 	}
+// }
