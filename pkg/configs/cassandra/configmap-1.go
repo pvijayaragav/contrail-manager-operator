@@ -1,11 +1,11 @@
 package cassandra
-	
+
 import (
 	"github.com/ghodss/yaml"
 	corev1 "k8s.io/api/core/v1"
 )
 
-var yamlDatacassandra= `
+var yamlDatacassandra = `
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -44,4 +44,3 @@ func GetConfigMap() *corev1.ConfigMap {
 	}
 	return &cm
 }
-	

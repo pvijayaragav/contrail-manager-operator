@@ -26,7 +26,7 @@ data:
   CONFIGDB_PORT: "9164"
 `
 
-func GetConfigMap() *corev1.ConfigMap {
+func getConfigMap() *corev1.ConfigMap {
 	fileData := configMap
 	yamlData := string(fileData)
 	cm := corev1.ConfigMap{}
