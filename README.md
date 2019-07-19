@@ -1,1 +1,0 @@
-# contrail-manager-operator
