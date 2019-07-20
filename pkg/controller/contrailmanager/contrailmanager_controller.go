@@ -2,7 +2,6 @@ package contrailmanager
 
 import (
 	"context"
-	"fmt"
 
 	contrailv1alpha1 "github.com/operators/contrail-manager-test-1/pkg/apis/contrail/v1alpha1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
@@ -111,43 +110,21 @@ func (r *ReconcileContrailManager) Reconcile(request reconcile.Request) (reconci
 	2. If CR already present ignores
 	3. Updates not supported now
 	*/
-	var _crName string
-	_name := instance.Name
-	for _, service := range contrailServices {
-		_crName = service + "-" + _name
-		fmt.Println("Checking if cr " + _crName + " present")
-		if !crPresent(crdMap[service], _crName, request, r.client) {
-			fmt.Println("cr not present creating")
-			if createCr(crdMap[service], _crName, request, r.client) {
-				r.updateStatus(instance, true, service)
-			} else {
-				r.updateStatus(instance, true, service)
-			}
-		}
+	for _, service := range ContrailServicesMap {
+		return reconcileContrailService(service, request)
 	}
 
-	instance.Status.Completed = getInstallCompleted()
-	instance.Status.Active = getAllComponentsStatus()
-	instance.Status.Platform = contrailv1alpha1.Platform{Orchestrator: "kubernetes"}
-	err = r.client.Status().Update(context.TODO(), instance)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileContrailManager) updateStatus(instance *contrailv1alpha1.ContrailManager, status bool, service string) {
-	switch service {
-	case "cassandra":
-		instance.Status.CassandraStatus = true
+func reconcileContrailService(service ContrailService, request reconcile.Request) (reconcile.Result, error) {
+	/* All services start point is here
+	based on the services their respective functions for
+	create, read, update, etc will be called
+	*/
+	err := CreateContrailInstance(service, request)
+	if err != nil {
+		panic(err)
 	}
-	r.client.Status().Update(context.TODO(), instance)
-}
-
-func getAllComponentsStatus() bool {
-	return false
-}
-
-func getInstallCompleted() bool {
-	return true
+	return reconcile.Result{}, nil
 }

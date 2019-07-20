@@ -10,6 +10,7 @@ import (
 	contrailv1alpha1 "github.com/operators/contrail-manager-test-1/pkg/apis/contrail/v1alpha1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -55,4 +56,16 @@ func createCr(crdType string,
 		return contrailv1alpha1.ContrailCassandra{}.CreateCr(crName, request, r)
 	}
 	return false
+}
+
+// CreateContrailInstance creates an Instance of type Runtime.Object with input from ContrailService
+func CreateContrailInstance(service ContrailService, request reconcile.Request) error {
+	rto := getRuntimeObject(service)
+	objKind := rto.GetObjectKind()
+	fmt.Println(objKind)
+	return nil
+}
+
+func getRuntimeObject(service ContrailService) runtime.Object {
+	return service.runtimeObject
 }
