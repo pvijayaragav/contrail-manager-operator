@@ -2,70 +2,86 @@ package contrailmanager
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
-	//  "time"
+	// "time"
 
+	"github.com/operators/contrail-manager-test-1/pkg/apis/contrail/v1alpha1"
 	contrailv1alpha1 "github.com/operators/contrail-manager-test-1/pkg/apis/contrail/v1alpha1"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	k8serror "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/kubernetes/scheme"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	//  logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
-func crdPresent(crdType string,
-	request reconcile.Request,
-	r client.Client) bool {
-	// check if cr present already
-	_crdFullName := strings.ToLower(crdType) + "s" + "." + group
-	_crd := apiextensionsv1beta1.CustomResourceDefinition{}
+func getInstanceNameForService(service ContrailService, request reconcile.Request) string {
+	return service.name + "-" + request.Name
+}
 
-	err := r.Get(context.TODO(), types.NamespacedName{Name: _crdFullName}, &_crd)
+func getRuntimeObject(service ContrailService) runtime.Object {
+	return service.runtimeObject
+}
+
+func checkCrdPresent(crdType string, request reconcile.Request, r client.Client) bool {
+	// check if crd present already
+	crdFullName := strings.ToLower(crdType) + "s" + "." + group
+	crd := apiextensionsv1beta1.CustomResourceDefinition{}
+
+	err := r.Get(context.TODO(), types.NamespacedName{Name: crdFullName}, &crd)
 	if err != nil {
-		fmt.Println("CRD not present")
+		fmt.Println("CRD not found")
 		return false
 	}
 	fmt.Println("CRD found")
 	return true
 }
 
-func crPresent(crdType string,
-	crName string,
-	request reconcile.Request,
-	r client.Client) bool {
-	// check if cr present already
-	if crdPresent(crdType, request, r) {
-		switch crdType {
-		case "ContrailCassandra":
-			return contrailv1alpha1.ContrailCassandra{}.CrExists(crName, request, r)
+// CreateContrailService creates the contrail service
+func CreateContrailService(service ContrailService, request reconcile.Request,
+	client client.Client, managerScheme *runtime.Scheme, managerInstance runtime.Object) error {
+	rto := service.runtimeObject
+	kind := rto.GetObjectKind()
+	gvk := kind.GroupVersionKind()
+	objType := gvk.Kind
+	gkv := schema.FromAPIVersionAndKind(gvk.Group+"/"+gvk.Version, gvk.Kind)
+	newObj, err := scheme.Scheme.New(gkv)
+	if err != nil {
+		return err
+	}
+	if checkCrdPresent(objType, request, client) {
+		return errors.New("crd not found")
+	}
+	switch objType {
+	case "ContrailCassandra":
+		instanceObject := newObj.(*v1alpha1.ContrailCassandra)
+		instanceName := instanceObject.GetInstanceName(request)
+		err := instanceObject.ReadInstance(instanceName, request, client)
+		if err == nil {
+			fmt.Println("Cassandra instance = " + instanceName + "already present")
+			// Update Custom Resource logic goes here
+			return nil
+		}
+		if k8serror.IsNotFound(err) {
+			fmt.Println("Cassandra instance = " + instanceName + "not found creating...")
+			// Create the custom resource instance here
+			rto := instanceObject.CreateInstance(request, client)
+			service.runtimeObject = rto
+			rtoObj := rto.(*v1alpha1.ContrailCassandra)
+			// Set ContrailCassandra instance as the owner and controller
+			if err := controllerutil.SetControllerReference(managerInstance.(*contrailv1alpha1.ContrailManager), rtoObj, managerScheme); err != nil {
+				return err
+			}
+			return rtoObj.UpdateStatus(rto, request, client)
 		}
 	}
-	return false
-}
-
-func createCr(crdType string,
-	crName string,
-	request reconcile.Request,
-	r client.Client) bool {
-	switch crdType {
-	case "ContrailCassandra":
-		return contrailv1alpha1.ContrailCassandra{}.CreateCr(crName, request, r)
-	}
-	return false
-}
-
-// CreateContrailInstance creates an Instance of type Runtime.Object with input from ContrailService
-func CreateContrailInstance(service ContrailService, request reconcile.Request) error {
-	rto := getRuntimeObject(service)
-	objKind := rto.GetObjectKind()
-	fmt.Println(objKind)
 	return nil
-}
-
-func getRuntimeObject(service ContrailService) runtime.Object {
-	return service.runtimeObject
 }

@@ -110,19 +110,25 @@ func (r *ReconcileContrailManager) Reconcile(request reconcile.Request) (reconci
 	2. If CR already present ignores
 	3. Updates not supported now
 	*/
+	err = main()
+	if err != nil {
+		return reconcile.Result{}, err
+	}
 	for _, service := range ContrailServicesMap {
-		return reconcileContrailService(service, request)
+		return r.reconcileContrailService(service, request, instance.DeepCopyObject())
 	}
 
 	return reconcile.Result{}, nil
 }
 
-func reconcileContrailService(service ContrailService, request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcileContrailManager) reconcileContrailService(service ContrailService,
+	request reconcile.Request, instance runtime.Object) (reconcile.Result, error) {
 	/* All services start point is here
 	based on the services their respective functions for
 	create, read, update, etc will be called
+	only create is done for now
 	*/
-	err := CreateContrailInstance(service, request)
+	err := CreateContrailService(service, request, r.client, r.scheme, instance)
 	if err != nil {
 		panic(err)
 	}

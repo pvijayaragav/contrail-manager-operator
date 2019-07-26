@@ -1,4 +1,4 @@
-package configs
+package cassandra
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 
 	// metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	configs "github.com/operators/contrail-manager-test-1/pkg/configs/cassandra"
 	appsv1 "k8s.io/api/apps/v1"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -46,7 +45,7 @@ func UpdateStatus(crName string, request reconcile.Request,
 func configureDeployment(crName string, request reconcile.Request,
 	r client.Client) bool {
 	_dpName := crName + "-" + "deployment"
-	_deployment := configs.GetDeployment()
+	_deployment := GetDeployment()
 	_deployment.Name = _dpName
 	_deployment.Namespace = request.Namespace
 	_deployment.Spec.Template.Spec.InitContainers[0].EnvFrom[0].ConfigMapRef.Name = crName + "-" + "env"
@@ -73,7 +72,7 @@ func configureDeployment(crName string, request reconcile.Request,
 func configureConfigMap(crName string, request reconcile.Request,
 	r client.Client) bool {
 	_cmName := crName + "-" + "env"
-	_configMap := configs.GetConfigMap()
+	_configMap := GetConfigMap()
 	_configMap.Name = _cmName
 	_configMap.Namespace = request.Namespace
 	err := r.Get(context.TODO(), types.NamespacedName{Name: _cmName, Namespace: request.Namespace}, _configMap)

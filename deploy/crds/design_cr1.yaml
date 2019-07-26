@@ -1,0 +1,292 @@
+apiVersion: contrail.juniper.net/v1alpha1
+kind: ContrailManager
+metadata:
+  name: cluster-1
+spec:
+  globalConfig:
+    registry:
+      name: opencontrailnightly
+      tag: latest
+      user:
+      password:
+    imagePullSecrets:
+      - "registry-secrets"
+    serviceAccount: contrail-manager-operator-sa
+    platform:
+      orchestrator: kubernetes
+    nodeSelector: {
+        "node-role.kubernetes.io/master": ""
+    }
+    replicas: 1
+    hostNetwork: true
+    override: false
+    upgradeStrategy: rolling
+    activate: true
+  components:
+    configdb:
+      metadata:
+        name: config-db
+        kind: ContrailCassandra
+        nodeType: config-database
+      spec:
+        activate: true
+        replicas: 3
+        serviceaccount: cassandra-sa
+        nodeSelector: {
+          "node-role.kubernetes.io/infra": ""
+        }
+        override: false
+        upgradeStrategy: rolling
+        tolerations:
+        configuration:
+          params:
+            clusterName: ContrailConfigDB
+            startRpc: true
+            listenAddress: auto
+            port: 9164
+            cqlPort: 9044
+            sslStoragePort: 7014
+            storagePort: 7013
+            jmxLocalPort: 7204
+    analyticsdb:
+      metadata:
+        name: analytics-db
+        kind: ContrailCassandra
+        nodeType: database
+      spec:
+        activate: true
+        replicas: 3
+        serviceaccount: analytics-sa
+        nodeSelector: {
+          "node-role.kubernetes.io/infra": ""
+        }
+        override: false
+        upgradeStrategy: rolling
+        tolerations:
+        configuration:
+          params:
+            clusterName: Contrail
+            startRpc: true
+            listenAddress: auto
+            port: 9163
+            cqlPort: 9045
+            sslStoragePort: 7004
+            storagePort: 7003
+            jmxLocalPort: 7203
+    zookeeper:
+      metadata:
+        name: zookeeper
+        kind: ContrailZookeeper
+        nodeType: config-database
+      spec:
+        activate: true
+        replicas: 3
+        serviceaccount: zookeeper-sa
+        nodeSelector: {
+          "node-role.kubernetes.io/infra": ""
+        }
+        override: false
+        upgradeStrategy: rolling
+        tolerations:
+        configuration:
+          params:
+            port: 2181
+            ports: 2888:3888
+    rabbitmq:
+      metadata:
+        name: rabbitmq
+        kind: ContrailRabbitmq
+        nodeType: config-database
+      spec:
+        activate: true
+        replicas: 3
+        serviceaccount: rabbitmq-sa
+        nodeSelector: {
+          "node-role.kubernetes.io/infra": ""
+        }
+        override: false
+        upgradeStrategy: rolling
+        tolerations:
+        configuration:
+          params:
+            port: 5672
+            erlangCookie: 47EFF3BB-4786-46E0-A5BB-58455B3C2CB4
+    config:
+      metadata:
+        name: config
+        kind: ContrailConfig
+        nodeType: config
+      spec:
+        activate: true
+        replicas: 3
+        serviceaccount: config-sa
+        nodeSelector: {
+          "node-role.kubernetes.io/infra": ""
+        }
+        override: false
+        upgradeStrategy: rolling
+        tolerations:
+        configuration:
+          params:
+    control:
+      metadata:
+        name: control
+        kind: ContrailControl
+        nodeType: control
+      spec:
+        activate: true
+        replicas: 3
+        serviceaccount: control-sa
+        nodeSelector: {
+          "node-role.kubernetes.io/infra": ""
+        }
+        override: false
+        upgradeStrategy: rolling
+        tolerations:
+        configuration:
+          params:
+    analytics:
+      metadata:
+        name: analytics
+        kind: ContrailAnalytics
+        nodeType: analytics
+      spec:
+        activate: true
+        replicas: 3
+        serviceaccount: analytics-sa
+        nodeSelector: {
+          "node-role.kubernetes.io/infra": ""
+        }
+        override: false
+        upgradeStrategy: rolling
+        tolerations:
+        configuration:
+          params:
+    kubemanager:
+      metadata:
+        name: kubemanager
+        kind: ContrailKubeManager
+        nodeType: kubemanager
+      spec:
+        activate: true
+        replicas: 3
+        serviceaccount: kubemanager-sa
+        nodeSelector: {
+          "node-role.kubernetes.io/infra": ""
+        }
+        override: false
+        upgradeStrategy: rolling
+        tolerations:
+        configuration:
+          params:
+            globalConfig:
+              tokenFile: /tmp/serviceaccount/token
+              clusterName: k8s
+              clusterProject: "{}"
+              clusterNetwork: "{}"
+              podSubnet: "10.32.0.0/12"
+              fabricSubnet: "10.64.0.0/12"
+              serviceSubnet: "10.96.0.0/16"
+              fabricForwarding: false
+              fabricSNAT: false
+              fipPool: "{}"
+              authMode: no-auth
+              k8sApiVip: "10.1.1.100"
+            dpdk:
+            nonNested:
+            nested:
+              contrailConf:
+                controlNode:
+                  - "10.84.13.51"
+                  - "10.84.13.52"
+                  - "10.84.13.53"
+                configNode:
+                  - "10.84.13.51"
+                analyticsNode:
+                  - "10.84.13.53"
+                controlNodeVip: 10.1.1.1
+                configNodeVip: 10.1.1.2
+                analyticsNodeVip: 10.1.1.3
+                vrouterVip: 10.10.10.4
+              keystone:
+                host: 10.84.13.1
+                adminTenant: admin
+                adminUser: admin
+                password: ""
+                port: 35357
+                urlVersion: /v3
+    vrouter:
+      metadata:
+        name: vrouter
+        kind: ContrailVrouter
+        nodeType: vrouter
+      spec:
+        activate: true
+        serviceaccount: kubemanager-sa
+        nodeSelector: {
+          "node-role.kubernetes.io/infra": ""
+        }
+        override: false
+        upgradeStrategy: rolling
+        configuration:
+          profiles:
+            - name: dpdk-profile1
+              dpdkConfiguration:
+                coreMask: "0xF"
+                moreConfig:
+                  key1: value1
+                  key2: value2
+            - name: sriov-profile1
+              sriovConfiguration:
+                numberOfVfs: 7
+                virtualFunctionMappings:
+                - vf1
+                - vf2
+                moreConfig:
+                  key1: value1
+                  key2: value2
+              kernelModeConfiguration:
+                moreConfig:
+                  key1: value1
+                  key2: value2
+            - name: kernelmode-profile1
+              kernelModeConfiguration:
+                moreConfig:
+                  key1: value1
+                  key2: value2
+          groups:
+            - name: dpdk-group1
+              vRouterGateway: 1.1.1.1
+              tolerations:
+              - operator: Exists
+                effect: NoSchedule
+              nodeSelector:
+                nicType: x710
+              profiles:
+              - dpdk-profile1
+              - other-profile1
+            - name: kernelmodesriov-group1
+              vRouterGateway: 1.1.2.1
+              tolerations:
+              - operator: Exists
+                effect: NoSchedule
+              nodeSelector:
+                sriov: "true"
+              profiles:
+              - sriov-profile1
+              - other-profile1
+            - name: kernelmode-rack1-group1
+              vRouterGateway: 1.1.3.1
+              tolerations:
+              - operator: Exists
+                effect: NoSchedule
+              nodeSelector:
+                hostType: "kernelmode"
+              profiles:
+              - kernelmode-profile1
+              - other-profile1
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true

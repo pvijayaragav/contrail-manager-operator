@@ -4,14 +4,18 @@ import (
 	"context"
 	"fmt"
 
-	cassandraconfig "github.com/operators/contrail-manager-test-1/pkg/configs"
+	cassandraconfig "github.com/operators/contrail-manager-test-1/pkg/configs/cassandra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
+
+var log = logf.Log.WithName("controller_cassandra")
 
 type Container struct {
 	Name       string      `json:"name,omitempty"`
@@ -50,70 +54,51 @@ type ContrailCassandraList struct {
 	Items           []ContrailCassandra `json:"items"`
 }
 
-// Implementing the contrailTypes interface
-func (crdType ContrailCassandra) CrExists(crName string, request reconcile.Request,
-	r client.Client) bool {
-	_cr := ContrailCassandra{}
-	err := r.Get(context.TODO(), types.NamespacedName{Name: crName, Namespace: request.Namespace}, &_cr)
-	if err == nil {
-		fmt.Println("CR " + crName + " for CRD ContrailCassandra present")
-		return true
-	}
-	return false
+// GetInstanceName creates a name for the instance
+func (crdType *ContrailCassandra) GetInstanceName(request reconcile.Request) string {
+	return request.Name + "-cassandra"
 }
 
-func (crdType ContrailCassandra) CreateCr(crName string, request reconcile.Request,
-	r client.Client) bool {
-	_contrailManager := ContrailManager{}
-	err := r.Get(context.TODO(), request.NamespacedName, &_contrailManager)
+// CreateInstance creates a new instance
+func (crdType *ContrailCassandra) CreateInstance(request reconcile.Request,
+	client client.Client) runtime.Object {
+	contrailManager := ContrailManager{}
+	instanceName := crdType.GetInstanceName(request)
+	err := client.Get(context.TODO(), types.NamespacedName{Name: instanceName, Namespace: request.Namespace}, &contrailManager)
 	if err != nil {
-		fmt.Println("Manager CR not found...")
-	} else {
-		fmt.Println("Manager CR found " + request.NamespacedName.Name)
-		// update config map based on manager cr spec
-		if cassandraconfig.Configure(crName, request, r) {
-			fmt.Println("Configure success")
-			_cassandraCr := ContrailCassandra{}
-			err = r.Get(context.TODO(), types.NamespacedName{Name: crName, Namespace: request.Namespace}, &_cassandraCr)
-			if err == nil {
-				fmt.Println("new CR " + crName + "found")
-				if cassandraconfig.UpdateStatus(crName, request, r) {
-					_cassandraCr.Status.Active = true
-				} else {
-					_cassandraCr.Status.Active = false
+		if errors.IsNotFound(err) {
+			if cassandraconfig.Configure(instanceName, request, client) {
+				newInstance := ContrailCassandra{}
+				err = client.Get(context.TODO(), types.NamespacedName{Name: instanceName, Namespace: request.Namespace}, &newInstance)
+				if err == nil {
+					return newInstance.DeepCopyObject()
 				}
-			} else {
-				fmt.Println("new CR " + crName + " not found trying to create")
-				if errors.IsNotFound(err) {
-					_cassandraCr.Name = crName
-					_cassandraCr.Namespace = request.Namespace
-					_cassandraCr.Spec.Replicas = 1
-					err = r.Create(context.TODO(), &_cassandraCr)
-					if err == nil {
-						if cassandraconfig.UpdateStatus(crName, request, r) {
-							_cassandraCr.Status.Active = true
-						} else {
-							_cassandraCr.Status.Active = false
-						}
-						fmt.Println("Created new CR " + crName)
-					} else {
-						fmt.Println("failed to create new CR " + crName)
-						return false
-					}
-				} else {
-					fmt.Println("did not create...")
-				}
-			}
-			err = r.Status().Update(context.TODO(), &_cassandraCr)
-			if err != nil {
-				fmt.Println("Failed to update Cassandra status")
-			}
-			if cassandraconfig.UpdateStatus(crName, request, r) {
-				return true
 			}
 		}
 	}
-	return false
+	return nil
+}
+
+// ReadInstance is Implementing the contrailTypes interface
+func (crdType *ContrailCassandra) ReadInstance(instanceName string, request reconcile.Request,
+	r client.Client) error {
+	instance := ContrailCassandra{}
+	err := r.Get(context.TODO(), types.NamespacedName{Name: instanceName, Namespace: request.Namespace}, &instance)
+	if err == nil {
+		fmt.Println("Custom Resource Instance " + instanceName + " for CRD ContrailCassandra present")
+		return nil
+	}
+	return err
+}
+
+// UpdateInstance updates an instance which is already present with a new object
+func (crdType *ContrailCassandra) UpdateInstance(oldObj runtime.Object, newObj runtime.Object, request reconcile.Request, client client.Client) error {
+	return nil
+}
+
+// UpdateStatus updates status for a instance object
+func (crdType *ContrailCassandra) UpdateStatus(instance runtime.Object, request reconcile.Request, client client.Client) error {
+	return nil
 }
 
 func init() {
