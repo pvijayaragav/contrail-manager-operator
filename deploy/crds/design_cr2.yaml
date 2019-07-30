@@ -18,7 +18,7 @@ spec:
  replicas: 1
  hostNetwork: true
  override: false
- cassandraTemplates:
+ cassandra:
  - metadata:
      name: config-db
      nodeType: config-database
@@ -63,7 +63,7 @@ spec:
        sslStoragePort: 7004
        storagePort: 7003
        jmxLocalPort: 7203
- zookeeperTemplates:
+ zookeeper:
  - metadata:
      name: zookeeper
      nodeType: config-database
@@ -96,7 +96,7 @@ spec:
      configuration:
        port: 5672
        erlangCookie: 47EFF3BB-4786-46E0-A5BB-58455B3C2CB4
- configTemplate:
+ config:
    metadata:
      name: config
      nodeType: config
@@ -113,7 +113,7 @@ spec:
      upgradeStrategy: rolling
      tolerations:
      configuration:
- controlTemplates:
+ control:
  - metadata:
      name: control
      kind: ContrailControl
@@ -131,7 +131,7 @@ spec:
      upgradeStrategy: rolling
      tolerations:
      configuration:
- analyticsTemplate:
+ analytics:
    metadata:
      name: analytics
      nodeType: analytics
@@ -148,7 +148,7 @@ spec:
      upgradeStrategy: rolling
      tolerations:
      configuration:
- kubemanagerTemplates:
+ kubemanager:
  - metadata:
      name: kubemanager
      nodeType: kubemanager
@@ -201,7 +201,7 @@ spec:
            password: ""
            port: 35357
            urlVersion: /v3
- vrouterProfileTemplates:
+ vrouterProfile:
  - metadata:
      name: dpdk-profile1
      labels:
@@ -237,7 +237,7 @@ spec:
      moreConfig:
        key1: value1
        key2: value2
- vrouterTemplates:
+ vrouter:
  - metadata:
      name: vrouter-dpdk-group1
      kind: ContrailVrouter

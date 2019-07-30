@@ -1,11 +1,11 @@
 package cassandra
-
+	
 import (
 	"github.com/ghodss/yaml"
 	appsv1 "k8s.io/api/apps/v1"
 )
 
-var deployment = `
+var yamlDatacassandraDeployment1= `
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -80,23 +80,22 @@ spec:
           path: /var/lib/contrail/configdb
       - name: configdb-log
         hostPath:
-          path: /var/log/contrail/configdb`
-
-func GetDeployment() *appsv1.Deployment {
-	fileData := deployment
-	yamlData := string(fileData)
-	dp := appsv1.Deployment{}
-	err := yaml.Unmarshal([]byte(yamlData), &dp)
+          path: /var/log/contrail/configdb
+`
+func Deployment1() *appsv1.Deployment{
+	deployment := appsv1.Deployment{}
+	err := yaml.Unmarshal([]byte(yamlDatacassandraDeployment1), &deployment)
 	if err != nil {
 		panic(err)
 	}
-	jsonData, err := yaml.YAMLToJSON([]byte(yamlData))
+	jsonData, err := yaml.YAMLToJSON([]byte(yamlDatacassandraDeployment1))
 	if err != nil {
 		panic(err)
 	}
-	err = yaml.Unmarshal([]byte(jsonData), &dp)
+	err = yaml.Unmarshal([]byte(jsonData), &deployment)
 	if err != nil {
 		panic(err)
 	}
-	return &dp
+	return &deployment
 }
+	

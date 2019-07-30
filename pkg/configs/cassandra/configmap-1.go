@@ -1,11 +1,11 @@
 package cassandra
-
+	
 import (
 	"github.com/ghodss/yaml"
 	corev1 "k8s.io/api/core/v1"
 )
 
-var yamlDatacassandra = `
+var yamlDatacassandraConfigmap1= `
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -26,8 +26,8 @@ data:
   CONFIGDB_PORT: "9164"
 `
 
-func GetConfigMap() *corev1.ConfigMap {
-	fileData := configMap
+func Configmap1() *corev1.ConfigMap {
+	fileData := yamlDatacassandraConfigmap1
 	yamlData := string(fileData)
 	cm := corev1.ConfigMap{}
 	err := yaml.Unmarshal([]byte(yamlData), &cm)
@@ -44,3 +44,4 @@ func GetConfigMap() *corev1.ConfigMap {
 	}
 	return &cm
 }
+	

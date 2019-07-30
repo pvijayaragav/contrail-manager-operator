@@ -10,15 +10,17 @@ import (
 
 	"github.com/operators/contrail-manager-test-1/pkg/apis/contrail/v1alpha1"
 	contrailv1alpha1 "github.com/operators/contrail-manager-test-1/pkg/apis/contrail/v1alpha1"
+	cassandracontroller "github.com/operators/contrail-manager-test-1/pkg/controller/contrailcassandra"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-	k8serror "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/kubernetes/scheme"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	operatorManager "sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	//  logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
@@ -33,7 +35,7 @@ func getRuntimeObject(service ContrailService) runtime.Object {
 
 func checkCrdPresent(crdType string, request reconcile.Request, r client.Client) bool {
 	// check if crd present already
-	crdFullName := strings.ToLower(crdType) + "s" + "." + group
+	crdFullName := strings.ToLower(crdType) + "s" + "." + Group
 	crd := apiextensionsv1beta1.CustomResourceDefinition{}
 
 	err := r.Get(context.TODO(), types.NamespacedName{Name: crdFullName}, &crd)
@@ -47,7 +49,7 @@ func checkCrdPresent(crdType string, request reconcile.Request, r client.Client)
 
 // CreateContrailService creates the contrail service
 func CreateContrailService(service ContrailService, request reconcile.Request,
-	client client.Client, managerScheme *runtime.Scheme, managerInstance runtime.Object) error {
+	client client.Client, managerScheme *runtime.Scheme, managerInstance runtime.Object, operatorManager operatorManager.Manager) error {
 	rto := service.runtimeObject
 	kind := rto.GetObjectKind()
 	gvk := kind.GroupVersionKind()
@@ -55,7 +57,10 @@ func CreateContrailService(service ContrailService, request reconcile.Request,
 	gkv := schema.FromAPIVersionAndKind(gvk.Group+"/"+gvk.Version, gvk.Kind)
 	newObj, err := scheme.Scheme.New(gkv)
 	if err != nil {
-		return err
+		newObj := v1alpha1.ContrailCassandra{}
+		newObj.CreateCustomResourceDefinition(client)
+		// Add controller to manager
+		return cassandracontroller.Add(operatorManager)
 	}
 	if checkCrdPresent(objType, request, client) {
 		return errors.New("crd not found")
@@ -70,7 +75,7 @@ func CreateContrailService(service ContrailService, request reconcile.Request,
 			// Update Custom Resource logic goes here
 			return nil
 		}
-		if k8serror.IsNotFound(err) {
+		if k8serrors.IsNotFound(err) {
 			fmt.Println("Cassandra instance = " + instanceName + "not found creating...")
 			// Create the custom resource instance here
 			rto := instanceObject.CreateInstance(request, client)
@@ -80,7 +85,7 @@ func CreateContrailService(service ContrailService, request reconcile.Request,
 			if err := controllerutil.SetControllerReference(managerInstance.(*contrailv1alpha1.ContrailManager), rtoObj, managerScheme); err != nil {
 				return err
 			}
-			return rtoObj.UpdateStatus(rto, request, client)
+			return rtoObj.UpdateStatus(rtoObj.Name, request, client)
 		}
 	}
 	return nil

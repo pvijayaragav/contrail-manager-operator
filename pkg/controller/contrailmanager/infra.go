@@ -8,8 +8,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-const group string = "contrail.juniper.net"
-const version string = "v1aplpha1"
+const Group string = "contrail.juniper.net"
+const Version string = "v1alpha1"
 
 var contrailServices = [...]string{
 	"cassandra",

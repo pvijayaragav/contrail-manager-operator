@@ -40,7 +40,7 @@ func Add(mgr manager.Manager) error {
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	apiextensionsv1beta1.AddToScheme(scheme.Scheme)
-	return &ReconcileContrailManager{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+	return &ReconcileContrailManager{client: mgr.GetClient(), scheme: mgr.GetScheme(), manager: mgr}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -76,8 +76,9 @@ var _ reconcile.Reconciler = &ReconcileContrailManager{}
 type ReconcileContrailManager struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client client.Client
-	scheme *runtime.Scheme
+	client  client.Client
+	scheme  *runtime.Scheme
+	manager manager.Manager
 }
 
 // Reconcile reads that state of the cluster for a ContrailManager object and makes changes based on the state read
@@ -128,9 +129,9 @@ func (r *ReconcileContrailManager) reconcileContrailService(service ContrailServ
 	create, read, update, etc will be called
 	only create is done for now
 	*/
-	err := CreateContrailService(service, request, r.client, r.scheme, instance)
+	err := CreateContrailService(service, request, r.client, r.scheme, instance, r.manager)
 	if err != nil {
-		panic(err)
+		return reconcile.Result{}, err
 	}
 	return reconcile.Result{}, nil
 }
